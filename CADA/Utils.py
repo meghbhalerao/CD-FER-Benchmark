@@ -184,7 +184,7 @@ def BulidAdversarialNetwork(args, model_output_num, class_num=7):
         
     else:
         random_layer = None
-        if args.methodOfDAN=='DANN':
+        if args.methodOfDAN=='DANN' or args.methodOfDAN=='MME':
             ad_net = AdversarialNetwork(model_output_num, 128)
         else:
             ad_net = AdversarialNetwork(model_output_num * class_num, 512)
@@ -201,10 +201,7 @@ def BulidDataloader(args, flag1='train', flag2='source'):
 
     # Set Transform
     trans = transforms.Compose([ 
-            transforms.Resize((args.faceScale, args.faceScale)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
-            ])
+            transforms.Resize((args.faceScale, args.faceScale))])
     target_trans = None
 
     # Basic Notes:
@@ -222,19 +219,16 @@ def BulidDataloader(args, flag1='train', flag2='source'):
     if flag1 == 'train':
         if flag2 == 'source':
             if args.sourceDataset=='RAF': # RAF Train Set
-                
                 list_patition_label = pd.read_csv(dataPath_prefix+'/RAF/basic/EmoLabel/list_patition_label.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
-
                 for index in range(list_patition_label.shape[0]):
                     if list_patition_label[index,0][:5] == "train":
-
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4] + '_boundingbox' + '.txt'):
                             continue
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-4]+'.txt'):
                             continue
 
-                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt').astype(np.int)
                         landmark = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
 
                         data_imgs.append(dataPath_prefix+'/RAF/basic/Image/original/'+list_patition_label[index,0])
@@ -776,19 +770,18 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.sourceDataset=='RAF': # RAF Test Set
-
                 list_patition_label = pd.read_csv(dataPath_prefix+'/RAF/basic/EmoLabel/list_patition_label.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
 
                 for index in range(list_patition_label.shape[0]):
                     if list_patition_label[index,0][:4] == "test":
 
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt'):
                             continue
                         if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt'):
                             continue
 
-                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt').astype(np.int)
                         landmark = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
 
                         data_imgs.append(dataPath_prefix+'/RAF/basic/Image/original/'+list_patition_label[index,0])
@@ -821,7 +814,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                 list_patition_label = np.array(list_patition_label)
 
                 for index in range(list_patition_label.shape[0]):
-
                     if not os.path.exists(dataPath_prefix+'/JAFFE/annos/bbox/'+list_patition_label[index,0][:-4]+'txt'):
                         continue
                     if not os.path.exists(dataPath_prefix+'/JAFFE/annos/landmark_5/'+list_patition_label[index,0][:-4]+'txt'):
@@ -877,7 +869,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.targetDataset=='SFEW': # SFEW 2.0 Val Set
-
                 for index, expression in enumerate(['Surprise','Fear','Disgust','Happy','Sad','Angry','Neutral']):
                     Dirs = os.listdir(os.path.join(dataPath_prefix+'/SFEW/Val/Annotations/Bboxs/',expression))
                     for bboxName in Dirs:
@@ -901,7 +892,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                         data_landmarks.append(landmark)
 
             elif args.targetDataset=='FER2013': # FER2013 Val Set
-
                 FER2013toLabel = { 5:0, 2:1, 1:2, 3:3, 4:4, 0:5, 6:6 }
                 list_patition_label = pd.read_csv(dataPath_prefix+'/FER2013/list/val_list.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
@@ -923,7 +913,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.targetDataset=='ExpW': # ExpW Val Set
-
                 ExpWtoLabel = { 5:0, 2:1, 1:2, 3:3, 4:4, 0:5, 6:6 }
                 list_patition_label = pd.read_csv(dataPath_prefix+'/ExpW/list/Landmarks_5/val_list_5landmarks.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
@@ -939,16 +928,12 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
            
             elif args.targetDataset=='AFED': # AFED Val Set
-
                 AsiantoLabel = { 3:0, 6:1, 5:2, 1:3, 4:4, 9:5, 0:6 }
                 list_patition_label = pd.read_csv(dataPath_prefix+'/Asian_Facial_Expression/AsianMovie_0725_0730/list/val_list.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
-
                 for index in range(list_patition_label.shape[0]):
-
                     if list_patition_label[index,-1] not in AsiantoLabel.keys():
                         continue
-
                     bbox = list_patition_label[index,1:5].astype(np.int)
                     landmark = np.loadtxt(dataPath_prefix+'/Asian_Facial_Expression/AsianMovie_0725_0730/annos/landmark_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
                     
@@ -958,15 +943,12 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.targetDataset=='WFED': # WFED Val Set
-
-                WesternToLabel = { 2:0, 5:1, 4:2, 1:3, 3:4, 6:5, 0:6 }
+                WesternToLabel = {2:0, 5:1, 4:2, 1:3, 3:4, 6:5, 0:6}
                 list_patition_label = pd.read_csv(dataPath_prefix+'/Western_Films_Expression_Datasets/list/val_random.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
 
                 for index in range(list_patition_label.shape[0]):
-
                     bbox = list_patition_label[index,1:5].astype(np.int)
-                    
                     if not os.path.exists(dataPath_prefix+'/Western_Films_Expression_Datasets/annos/5_landmarks/'+list_patition_label[index,0]+'.txt'):
                         continue
                     landmark = np.loadtxt(dataPath_prefix+'/Western_Films_Expression_Datasets/annos/5_landmarks/'+list_patition_label[index,0]+'.txt').astype(np.int)
@@ -984,35 +966,34 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.targetDataset=='RAF': # RAF Test Set
-
                 list_patition_label = pd.read_csv(dataPath_prefix+'/RAF/basic/EmoLabel/list_patition_label.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
-
                 for index in range(list_patition_label.shape[0]):
+                    print(list_patition_label[index,0][:4])
                     if list_patition_label[index,0][:4] == "test":
-
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt'):
+                        print("Here")
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt'):
                             continue
                         if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt'):
                             continue
 
-                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt').astype(np.int)
                         landmark = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
 
                         data_imgs.append(dataPath_prefix+'/RAF/basic/Image/original/'+list_patition_label[index,0])
                         data_labels.append(list_patition_label[index,1]-1)
                         data_bboxs.append(bbox)
                         data_landmarks.append(landmark)
+            elif args.targetDataset == 'AISIN':
+                
 
     # DataSet Distribute
     distribute_ = np.array(data_labels)
     print('The %s %s dataset quantity: %d' % ( flag1, flag2, len(data_imgs) ) )
-    print('The %s %s dataset distribute: %d, %d, %d, %d, %d, %d, %d' % ( flag1, flag2,
-                                                                               np.sum(distribute_==0), np.sum(distribute_==1), np.sum(distribute_==2), np.sum(distribute_==3),
-                                                                               np.sum(distribute_==4), np.sum(distribute_==5), np.sum(distribute_==6) ))
+    print('The %s %s dataset distribute: %d, %d, %d, %d, %d, %d, %d' % ( flag1, flag2, np.sum(distribute_==0), np.sum(distribute_==1), np.sum(distribute_==2), np.sum(distribute_==3), np.sum(distribute_==4), np.sum(distribute_==5), np.sum(distribute_==6) ))
 
     # DataSet
-    data_set = MyDataset(data_imgs, data_labels, data_bboxs, data_landmarks, flag1, trans, target_trans)
+    data_set = MyDataset(data_imgs, data_labels, data_bboxs, data_landmarks, flag1, trans, target_trans,use_fm = True)
 
     # DataLoader
     if flag1=='train':
@@ -1080,7 +1061,7 @@ def Initialize_Mean(args, model, useClassify=True):
     mean = None
 
     for step, (input, landmark, label) in enumerate(source_data_loader):
-        input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
+        input, landmark, label = input[0].cuda(), landmark.cuda(), label.cuda()
         with torch.no_grad():
             feature, pred, loc_pred = model(input, landmark, useClassify, 'Source')
 
@@ -1098,7 +1079,7 @@ def Initialize_Mean(args, model, useClassify=True):
     mean = None
 
     for step, (input, landmark, label) in enumerate(target_data_loader):
-        input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
+        input, landmark, label = input[0].cuda(), landmark.cuda(), label.cuda()
         with torch.no_grad():
             feature, pred, loc_pred = model(input, landmark, useClassify, 'Target')
 

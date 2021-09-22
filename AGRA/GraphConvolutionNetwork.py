@@ -195,15 +195,15 @@ class GCNwithIntraAndInterMatrix(nn.Module):
             IntraAdjMatrix = torch.zeros((6, 6), dtype=torch.float, requires_grad=True)
 
             # Link 1 : Global-Local (Same Domain)
-            IntraAdjMatrix[0, 1:] = self.Link1
-            IntraAdjMatrix[1:, 0] = self.Link1
+            IntraAdjMatrix.data[0, 1:] = self.Link1
+            IntraAdjMatrix.data[1:, 0] = self.Link1
 
             # Link 2 : Local-Local (Same Domain)
-            IntraAdjMatrix[1:, 1:] = self.Link2
+            IntraAdjMatrix.data[1:, 1:] = self.Link2
 
             # Self Link
             for i in range(6):
-                IntraAdjMatrix[i, i] = 1.0
+                IntraAdjMatrix.data[i, i] = 1.0
 
         self.IntraAdjMatrix = nn.Parameter(IntraAdjMatrix, requires_grad=True)
 
@@ -216,23 +216,23 @@ class GCNwithIntraAndInterMatrix(nn.Module):
             InterAdjMatrix = torch.zeros((12, 12), dtype=torch.float, requires_grad=True)
 
             # Link 4 : Global-Local (Cross Domain)
-            InterAdjMatrix[0, 7: ] = self.Link4
-            InterAdjMatrix[1:6, 6] = self.Link4
+            InterAdjMatrix.data[0, 7: ] = self.Link4
+            InterAdjMatrix.data[1:6, 6] = self.Link4
 
-            InterAdjMatrix[6, 1:6] = self.Link4
-            InterAdjMatrix[7: , 0] = self.Link4
+            InterAdjMatrix.data[6, 1:6] = self.Link4
+            InterAdjMatrix.data[7: , 0] = self.Link4
 
             # Link 5 : Local-Local (Cross Domain)
-            InterAdjMatrix[1:6, 7: ] = self.Link5
-            InterAdjMatrix[7: , 1:6] = self.Link5
+            InterAdjMatrix.data[1:6, 7: ] = self.Link5
+            InterAdjMatrix.data[7: , 1:6] = self.Link5
 
             # Link 3 : Corresponding location (Cross Domain)
             for i in range(12):
-                InterAdjMatrix[i ,(i+6)%12] = self.Link3
+                InterAdjMatrix.data[i ,(i+6)%12] = self.Link3
 
             # Self Link
             for i in range(12):
-                InterAdjMatrix[i, i] = 1.0
+                InterAdjMatrix.data[i, i] = 1.0
 
         self.InterAdjMatrix = nn.Parameter(InterAdjMatrix, requires_grad=True)
 

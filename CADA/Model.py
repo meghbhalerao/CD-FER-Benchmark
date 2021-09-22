@@ -27,8 +27,7 @@ class CountMeanOfFeature(nn.Module):
                 else:
                     exponential_average_factor = self.momentum
 
-            self.running_mean = exponential_average_factor * torch.mean(input.detach(), 0) + \
-                                (1-exponential_average_factor) * self.running_mean
+            self.running_mean = exponential_average_factor * torch.mean(input.detach(), 0) + (1-exponential_average_factor) * self.running_mean
 
         return input
 
@@ -64,8 +63,7 @@ class CountMeanAndCovOfFeature(nn.Module):
                 else:
                     exponential_average_factor = self.momentum
 
-            self.running_mean = exponential_average_factor * torch.mean(input.detach(), 0) + \
-                                (1-exponential_average_factor) * self.running_mean
+            self.running_mean = exponential_average_factor * torch.mean(input.detach(), 0) + (1-exponential_average_factor) * self.running_mean
 
             if self.temple_batch is None:
                 self.temple_batch = input.clone().detach()
@@ -88,9 +86,7 @@ class CountMeanAndCovOfFeature(nn.Module):
     def getSample(self, input):
 
         if self.training:
-            result = torch.FloatTensor(np.random.multivariate_normal(mean=self.running_mean.cpu().data.numpy(), 
-                                                                     cov=self.running_cov.cpu().data.numpy(), 
-                                                                     size=input.size(0))).to('cuda' if torch.cuda.is_available else 'cpu')
+            result = torch.FloatTensor(np.random.multivariate_normal(mean=self.running_mean.cpu().data.numpy(), cov=self.running_cov.cpu().data.numpy(), size=input.size(0))).to('cuda' if torch.cuda.is_available else 'cpu')
             return result
 
         return self.running_mean.expand(input.size(0), -1)
@@ -127,8 +123,7 @@ class CountMeanOfFeatureInCluster(nn.Module):
 
             for index in range(self.class_num):
                 if len(self.temple_cluster[index]) > 32:
-                    self.running_mean[index] = exponential_average_factor * torch.mean(torch.cat(self.temple_cluster[index], 0), 0) + \
-                                               (1-exponential_average_factor) * self.running_mean[index]
+                    self.running_mean[index] = exponential_average_factor * torch.mean(torch.cat(self.temple_cluster[index], 0), 0) +(1-exponential_average_factor) * self.running_mean[index]
                     self.temple_cluster[index] = []
 
         return input

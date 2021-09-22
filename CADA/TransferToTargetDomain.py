@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
-from Loss import Entropy, DANN, CDAN, HAFN, SAFN
+from Loss import Entropy, DANN, CDAN, HAFN, SAFN, MME, do_fixmatch
 from Utils import *
 
 parser = argparse.ArgumentParser(description='Domain adaptation for Expression Classification')
@@ -24,7 +24,7 @@ parser.add_argument('--Resume_Model', type=str, help='Resume_Model', default='No
 parser.add_argument('--GPU_ID', default='0', type=str, help='CUDA_VISIBLE_DEVICES')
 
 parser.add_argument('--useDAN', type=str2bool, default=False, help='whether to use DAN Loss')
-parser.add_argument('--methodOfDAN', type=str, default='CDAN-E', choices=['CDAN', 'CDAN-E', 'DANN'])
+parser.add_argument('--methodOfDAN', type=str, default='CDAN-E', choices=['CDAN', 'CDAN-E', 'DANN','MME'])
 
 parser.add_argument('--useAFN', type=str2bool, default=False, help='whether to use AFN Loss')
 parser.add_argument('--methodOfAFN', type=str, default='SAFN', choices=['HAFN', 'SAFN'])
@@ -93,31 +93,37 @@ def Train(args, model, ad_net, random_layer, train_source_dataloader, train_targ
     iter_source_dataloader = iter(train_source_dataloader)
     iter_target_dataloader = iter(train_target_dataloader)
 
-    # len(data_loader) = math.ceil(len(data_loader.dataset)/batch_size)
+    # len(data_loader) = math.ceil(lendata_loader.dataset)/batch_size)
     num_iter = len(train_source_dataloader) if (len(train_source_dataloader) > len(train_target_dataloader)) else len(train_target_dataloader)
 
     end = time.time()
+    f = 0
+    sum_ = 0
+    sum_batch =0
+    sum_list = [0,0]
     for batch_index in range(num_iter):
         try:
-            data_source, landmark_source, label_source = iter_source_dataloader.next()
+            data_source_, landmark_source, label_source = iter_source_dataloader.next()
         except:
             iter_source_dataloader = iter(train_source_dataloader)
-            data_source, landmark_source, label_source = iter_source_dataloader.next()
+            data_source_, landmark_source, label_source = iter_source_dataloader.next()
 
         try:
-            data_target, landmark_target, label_target = iter_target_dataloader.next()
+            data_target_, landmark_target, label_target = iter_target_dataloader.next()
         except:
             iter_target_dataloader = iter(train_target_dataloader)
-            data_target, landmark_target, label_target = iter_target_dataloader.next()
+            data_target_, landmark_target, label_target = iter_target_dataloader.next()
+            f = 1
         
         data_time.update(time.time()-end)
 
-        data_source, landmark_source, label_source = data_source.cuda(), landmark_source.cuda(), label_source.cuda()
-        data_target, landmark_target, label_target = data_target.cuda(), landmark_target.cuda(), label_target.cuda()
 
+        data_source, landmark_source, label_source = data_source_[0].cuda(), landmark_source.cuda(), label_source.cuda()
+        data_target, landmark_target, label_target = data_target_[0].cuda(), landmark_target.cuda(), label_target.cuda()
         # Forward Propagation
         end = time.time()
         feature, output, loc_output = model(torch.cat((data_source, data_target), 0), torch.cat((landmark_source, landmark_target), 0), False)
+ 
         batch_time.update(time.time()-end)
 
         # Compute Loss
@@ -135,11 +141,21 @@ def Train(args, model, ad_net, random_layer, train_source_dataloader, train_targ
                 dan_loss_ = CDAN([feature, softmax_output], ad_net, None, None, random_layer)
             elif args.methodOfDAN == 'DANN':
                 dan_loss_ = DANN(feature, ad_net)
+            elif args.methodOfDAN == "MME":
+                dan_loss_  = MME(feature)
+                if epoch >=1000:
+                    a, b, _, _, pl_loss = do_fixmatch(f, data_target_,label_target,landmark_target,model,0.975,nn.CrossEntropyLoss(reduce='none'))
+                    sum_ = sum_ + a
+                    sum_batch = sum_batch + b
+                    #print(pl_loss)
+                #print(global_cls_loss_,local_cls_loss_)    
         else:
             dan_loss_ = 0
-
-        loss_ = global_cls_loss_ + local_cls_loss_
-
+        if epoch >= 1000    :
+            loss_ = global_cls_loss_ + local_cls_loss_ + pl_loss
+        else:
+            loss_ = global_cls_loss_ + local_cls_loss_
+            
         if args.useAFN:
             loss_+=afn_loss_
 
@@ -156,7 +172,7 @@ def Train(args, model, ad_net, random_layer, train_source_dataloader, train_targ
                 else:
                     op_out = torch.bmm(softmax_output.unsqueeze(2), feature.unsqueeze(1))
                     adnet_output = ad_net(op_out.view(-1, softmax_output.size(1) * feature.size(1)))
-            elif args.methodOfDAN=='DANN': 
+            elif args.methodOfDAN=='DANN' or args.methodOfDAN=='MME': 
                 adnet_output = ad_net(feature)
 
             adnet_output = adnet_output.cpu().data.numpy()
@@ -214,14 +230,7 @@ def Train(args, model, ad_net, random_layer, train_source_dataloader, train_targ
     LoggerInfo+=AccuracyInfo
 
     LoggerInfo+='''    AdversarialNet Acc {0:.4f} Acc_avg {1:.4f} Prec_avg {2:.4f} Recall_avg {3:.4f} F1_avg {4:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f} DAN Loss {dan_loss:.4f}'''.format(num_ADNet/(2.0*args.train_batch_size*num_iter) if args.useDAN else 0,
-                                                                                                    acc_avg, prec_avg, recall_avg, f1_avg,
-                                                                                                    loss=loss.avg, 
-                                                                                                    global_cls_loss=global_cls_loss.avg, 
-                                                                                                    local_cls_loss=local_cls_loss.avg, 
-                                                                                                    afn_loss=afn_loss.avg if args.useAFN else 0, 
-                                                                                                    dan_loss=dan_loss.avg if args.useDAN else 0)
-                                                                                                
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f} DAN Loss {dan_loss:.4f}'''.format(num_ADNet/(2.0*args.train_batch_size*num_iter) if args.useDAN else 0, acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg, global_cls_loss=global_cls_loss.avg, local_cls_loss=local_cls_loss.avg, afn_loss=afn_loss.avg if args.useAFN else 0, dan_loss=dan_loss.avg if args.useDAN else 0)
     print(LoggerInfo)
 
 def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Accuracy, Best_Recall, epoch, writer):
@@ -241,7 +250,7 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Accur
     for batch_index, (input, landmark, target) in enumerate(iter_source_dataloader):
         data_time.update(time.time()-end)
 
-        input, landmark, target = input.cuda(), landmark.cuda(), target.cuda()
+        input, landmark, target = input[0].cuda(), landmark.cuda(), target.cuda()
         
         with torch.no_grad():
             end = time.time()
@@ -283,10 +292,11 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Accur
     for batch_index, (input, landmark, target) in enumerate(iter_target_dataloader):
         data_time.update(time.time()-end)
 
-        input, landmark, target = input.cuda(), landmark.cuda(), target.cuda()
+        input, landmark, target = input[0].cuda(), landmark.cuda(), target.cuda()
         
         with torch.no_grad():
             end = time.time()
+
             feature, output, loc_output = model(input, landmark, False, 'Target')
             batch_time.update(time.time()-end)
         
@@ -479,7 +489,6 @@ def main():
     writer = SummaryWriter(os.path.join(args.OutputPath, args.Log_Name))
 
     for epoch in range(1, args.epochs + 1):
-
         if args.showFeature and epoch%5 == 1:
             Visualization('{}_Source.pdf'.format(epoch), model, train_source_dataloader, useClassify=False, domain='Source')
             Visualization('{}_Target.pdf'.format(epoch), model, train_target_dataloader, useClassify=False, domain='Target')

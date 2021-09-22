@@ -44,7 +44,7 @@ class MyDataset(data.Dataset):
             random_flip = False
 
         # Enlarge BoundingBox
-        padding_w, padding_h = int( 0.5 * max( 0, int( 0.20 * (right-left) ) ) ), int( 0.5 * max( 0, int( 0.20 * (bottom-top) ) ) )
+        padding_w, padding_h = int(0.5 * max( 0, int( 0.20 * (right-left) ) ) ), int( 0.5 * max( 0, int( 0.20 * (bottom-top) ) ) )
     
         if enlarge_bbox:
             left  = max(left - padding_w, 0)

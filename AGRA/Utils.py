@@ -169,8 +169,8 @@ def BulidModel(args):
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
 
-    model = model.cuda()
-
+    #model = model.cuda()
+    model.cuda()
     return model
 
 def BulidAdversarialNetwork(args, model_output_num, class_num=7):
@@ -222,20 +222,18 @@ def BulidDataloader(args, flag1='train', flag2='source'):
     if flag1 == 'train':
         if flag2 == 'source':
             if args.sourceDataset=='RAF': # RAF Train Set
-                
                 list_patition_label = pd.read_csv(dataPath_prefix+'/RAF/basic/EmoLabel/list_patition_label.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
-
                 for index in range(list_patition_label.shape[0]):
                     if list_patition_label[index,0][:5] == "train":
-
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4] + '_boundingbox' + '.txt'):
                             continue
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-4]+'.txt'):
                             continue
-
-                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+                        
+                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt').astype(np.int)
                         landmark = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+
 
                         data_imgs.append(dataPath_prefix+'/RAF/basic/Image/original/'+list_patition_label[index,0])
                         data_labels.append(list_patition_label[index,1]-1)
@@ -243,13 +241,11 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                         data_landmarks.append(landmark)
 
             elif args.sourceDataset=='AFED': # AFED Train Set
-
                 AsiantoLabel = { 3:0, 6:1, 5:2, 1:3, 4:4, 9:5, 0:6 }
                 list_patition_label = pd.read_csv(dataPath_prefix+'/Asian_Facial_Expression/AsianMovie_0725_0730/list/train_list.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
 
                 for index in range(list_patition_label.shape[0]):
-
                     if list_patition_label[index,-1] not in AsiantoLabel.keys():
                         continue
 
@@ -381,7 +377,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
 
         elif flag2 == 'target':
             if args.targetDataset=='CK+': # CK+ Train Set
-                
                 for index, expression in enumerate(['Surprised','Fear','Disgust','Happy','Sad','Anger','Neutral']):
                     Dirs = os.listdir(os.path.join(dataPath_prefix+'/CK+_Emotion/Train/CK+_Train_crop',expression))
                     for imgFile in Dirs:
@@ -590,7 +585,6 @@ def BulidDataloader(args, flag1='train', flag2='source'):
     elif flag1 == 'test':
         if flag2 =='source':
             if args.sourceDataset=='CK+': # CK+ Val Set
-
                 for index, expression in enumerate(['Surprised','Fear','Disgust','Happy','Sad','Anger','Neutral']):
                     Dirs = os.listdir(os.path.join(dataPath_prefix+'/CK+_Emotion/Val/CK+_Val_crop',expression))
                     for imgFile in Dirs:
@@ -776,21 +770,18 @@ def BulidDataloader(args, flag1='train', flag2='source'):
                     data_landmarks.append(landmark)
 
             elif args.sourceDataset=='RAF': # RAF Test Set
-
                 list_patition_label = pd.read_csv(dataPath_prefix+'/RAF/basic/EmoLabel/list_patition_label.txt', header=None, delim_whitespace=True)
                 list_patition_label = np.array(list_patition_label)
-
+                
                 for index in range(list_patition_label.shape[0]):
                     if list_patition_label[index,0][:4] == "test":
-
-                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt'):
+                        if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt'):
+                            print(list_patition_label[index,0][:-4]+'_boundingbox.txt')
                             continue
                         if not os.path.exists(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt'):
                             continue
-
-                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
+                        bbox = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/boundingbox/'+list_patition_label[index,0][:-4]+'_boundingbox.txt').astype(np.int)
                         landmark = np.loadtxt(dataPath_prefix+'/RAF/basic/Annotation/Landmarks_5/'+list_patition_label[index,0][:-3]+'txt').astype(np.int)
-
                         data_imgs.append(dataPath_prefix+'/RAF/basic/Image/original/'+list_patition_label[index,0])
                         data_labels.append(list_patition_label[index,1]-1)
                         data_bboxs.append(bbox)
@@ -1006,10 +997,8 @@ def BulidDataloader(args, flag1='train', flag2='source'):
 
     # DataSet Distribute
     distribute_ = np.array(data_labels)
-    print('The %s %s dataset quantity: %d' % ( flag1, flag2, len(data_imgs) ) )
-    print('The %s %s dataset distribute: %d, %d, %d, %d, %d, %d, %d' % ( flag1, flag2,
-                                                                               np.sum(distribute_==0), np.sum(distribute_==1), np.sum(distribute_==2), np.sum(distribute_==3),
-                                                                               np.sum(distribute_==4), np.sum(distribute_==5), np.sum(distribute_==6) ))
+    print(' %s %s dataset qty: %d' % ( flag1, flag2, len(data_imgs) ) )
+    print(' %s %s dataset dist: %d, %d, %d, %d, %d, %d, %d' % (flag1, flag2, np.sum(distribute_==0), np.sum(distribute_==1), np.sum(distribute_==2), np.sum(distribute_==3), np.sum(distribute_==4), np.sum(distribute_==5), np.sum(distribute_==6) ))
 
     # DataSet
     data_set = MyDataset(data_imgs, data_labels, data_bboxs, data_landmarks, flag1, trans, target_trans)

@@ -106,7 +106,7 @@ def Train(args, model, train_dataloader, optimizer, epoch, writer):
     end = time.time()
     for step, (input, landmark, label) in enumerate(train_dataloader):
 
-        input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
+        input, landmark, label = input[0].cuda(), landmark.cuda(), label.cuda()
         data_time.update(time.time()-end)
 
         # Forward propagation
@@ -163,11 +163,7 @@ def Train(args, model, train_dataloader, optimizer, epoch, writer):
     LoggerInfo+=AccuracyInfo
 
     LoggerInfo+='''    Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg,
-                                                                                                                                        loss=loss.avg, 
-                                                                                                                                        global_cls_loss=global_cls_loss.avg, 
-                                                                                                                                        local_cls_loss=local_cls_loss.avg,
-                                                                                                                                        afn_loss=afn_loss.avg)
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg, global_cls_loss=global_cls_loss.avg, local_cls_loss=local_cls_loss.avg, afn_loss=afn_loss.avg)
 
     print(LoggerInfo)
 
@@ -187,7 +183,7 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     end = time.time()
     for step, (input, landmark, label) in enumerate(iter_source_dataloader):
         
-        input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
+        input, landmark, label = input[0].cuda(), landmark.cuda(), label.cuda()
         data_time.update(time.time()-end)
         
         # Forward Propagation
@@ -249,7 +245,7 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     end = time.time()
     for step, (input, landmark, label) in enumerate(iter_target_dataloader):
         
-        input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
+        input, landmark, label = input[0].cuda(), landmark.cuda(), label.cuda()
         data_time.update(time.time()-end)
         
         # Forward Propagation
@@ -286,11 +282,7 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     LoggerInfo+=AccuracyInfo
 
     LoggerInfo+='''    Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg,\
-                                                                                                                                        loss=loss.avg, 
-                                                                                                                                        global_cls_loss=global_cls_loss.avg,
-                                                                                                                                        local_cls_loss=local_cls_loss.avg,
-                                                                                                                                        afn_loss=afn_loss.avg)
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg, global_cls_loss=global_cls_loss.avg, local_cls_loss=local_cls_loss.avg, afn_loss=afn_loss.avg)
 
     print(LoggerInfo)
 

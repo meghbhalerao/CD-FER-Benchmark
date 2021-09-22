@@ -1,5 +1,4 @@
 import torch
-
 from MobileNet import MobileNetV2, MobileNetV2_onlyGlobal
 
 model = MobileNetV2(useIntraGCN=True, useInterGCN=True, useRandomMatrix=False, useAllOneMatrix=False, useCov=False, useCluster=True)

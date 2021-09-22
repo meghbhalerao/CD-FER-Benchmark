@@ -1,9 +1,9 @@
 Log_Name='ResNet50_CropNet_GCNwithIntraMatrixAndInterMatrix_useCluster_withoutAFN_transferToTargetDomain_RAFtoAFED'
 Resume_Model='ResNet50_CropNet_GCNwithIntraMatrixAndInterMatrix_useCluster_withoutAFN_trainOnSourceDomain_RAFtoAFED.pkl'
 OutputPath='.'
-GPU_ID=0
+GPU_ID=1
 Backbone='ResNet50'
-useAFN='False'
+useAFN='True'
 methodOfAFN='SAFN'
 radius=25
 deltaRadius=1
@@ -32,38 +32,38 @@ useAllOneMatrix='False'
 useCov='False'
 useCluster='True'
     
-OMP_NUM_THREADS=16 MKL_NUM_THREADS=16 CUDA_VISIBLE_DEVICES=${GPU_ID} python3 TransferToTargetDomain.py \ 
-    --Log_Name ${Log_Name} \ 
-    --OutputPath ${OutputPath} \ 
-    --Backbone ${Backbone } \ 
-    --useOtherExps ${useOtherExps} \ 
-    --Resume_Model ${Resume_Model} \ 
-    --GPU_ID ${GPU_ID} \ 
-    --useAFN ${useAFN} \ 
-    --methodOfAFN ${methodOfAFN} \ 
-    --radius ${radius} \ 
-    --deltaRadius ${deltaRadius} \ 
-    --weight_L2norm ${weight_L2norm} \ 
-    --useDAN ${useDAN} \ 
-    --methodOfDAN ${methodOfDAN} \ 
-    --faceScale ${faceScale} \ 
-    --sourceDataset ${sourceDataset} \ 
-    --targetDataset ${targetDataset} \ 
-    --train_batch_size ${train_batch_size} \ 
-    --test_batch_size ${test_batch_size} \ 
-    --useMultiDatasets ${useMultiDatasets} \ 
-    --epochs ${epochs} \ 
-    --lr ${lr} \ 
-    --lr_ad ${lr_ad} \ 
-    --momentum ${momentum} \ 
-    --weight_decay ${weight_decay} \ 
-    --isTest ${isTest} \ 
-    --showFeature ${showFeature} \ 
-    --class_num ${class_num} \ 
-    --useIntraGCN ${useIntraGCN} \ 
-    --useInterGCN ${useInterGCN} \ 
-    --useLocalFeature ${useLocalFeature} \ 
-    --useRandomMatrix ${useRandomMatrix} \ 
-    --useAllOneMatrix ${useAllOneMatrix} \ 
-    --useCov ${useCov} \ 
-    --useCluster ${useCluster}
+OMP_NUM_THREADS=16 MKL_NUM_THREADS=16 CUDA_VISIBLE_DEVICES=${GPU_ID} python3 TransferToTargetDomain.py \
+--Log_Name ${Log_Name} \
+--OutputPath ${OutputPath} \
+--Backbone ${Backbone} \
+--Resume_Model ${Resume_Model} \
+--GPU_ID ${GPU_ID} \
+--useAFN ${useAFN} \
+--methodOfAFN ${methodOfAFN} \
+--radius ${radius} \
+--deltaRadius ${deltaRadius} \
+--weight_L2norm ${weight_L2norm} \
+--useDAN ${useDAN} \
+--methodOfDAN ${methodOfDAN} \
+--faceScale ${faceScale} \
+--sourceDataset ${sourceDataset} \
+--targetDataset ${targetDataset} \
+--train_batch_size ${train_batch_size} \
+--test_batch_size ${test_batch_size} \
+--useMultiDatasets ${useMultiDatasets} \
+--epochs ${epochs} \
+--lr ${lr} \
+--lr_ad ${lr_ad} \
+--momentum ${momentum} \
+--weight_decay ${weight_decay} \
+--isTest ${isTest} \
+--showFeature ${showFeature} \
+--class_num ${class_num} \
+--useIntraGCN ${useIntraGCN} \
+--useInterGCN ${useInterGCN} \
+--useLocalFeature ${useLocalFeature} \
+--useRandomMatrix ${useRandomMatrix} \
+--useAllOneMatrix ${useAllOneMatrix} \
+--useCov ${useCov} \
+--useCluster ${useCluster}
+##--useOtherExps ${useOtherExps} \

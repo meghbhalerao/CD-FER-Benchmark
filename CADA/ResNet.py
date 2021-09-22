@@ -181,9 +181,7 @@ class Backbone(nn.Module):
         self.GAP = nn.AdaptiveAvgPool2d((1,1))
 
         #self.GCN = GCN(64, 128, 64)
-        self.GCN = GCNwithIntraAndInterMatrix(64, 128, 64, 
-                                              useIntraGCN=useIntraGCN, useInterGCN=useInterGCN, 
-                                              useRandomMatrix=useRandomMatrix, useAllOneMatrix=useAllOneMatrix)
+        self.GCN = GCNwithIntraAndInterMatrix(64, 128, 64,useIntraGCN=useIntraGCN, useInterGCN=useInterGCN, useRandomMatrix=useRandomMatrix, useAllOneMatrix=useAllOneMatrix)
 
         self.SourceMean = (CountMeanAndCovOfFeature(64+320) if useCov else CountMeanOfFeature(64+320)) if not useCluster else CountMeanOfFeatureInCluster(64+320)
         self.TargetMean = (CountMeanAndCovOfFeature(64+320) if useCov else CountMeanOfFeature(64+320)) if not useCluster else CountMeanOfFeatureInCluster(64+320)
@@ -257,8 +255,7 @@ class Backbone(nn.Module):
             feature = self.GCN(feature.view(feature.size(0), 12, -1))                                                       # Batch * 12 * 64
 
             feature = feature.view(feature.size(0), -1)                                                                     # Batch * (64+320 + 64+320)
-            feature = torch.cat( (feature.narrow(0, 0, feature.size(0)//2).narrow(1, 0, 64+320), \
-                                  feature.narrow(0, feature.size(0)//2, feature.size(0)//2).narrow(1, 64+320, 64+320) ), 0) # Batch * (64+320)
+            feature = torch.cat( (feature.narrow(0, 0, feature.size(0)//2).narrow(1, 0, 64+320), feature.narrow(0, feature.size(0)//2, feature.size(0)//2).narrow(1, 64+320, 64+320) ), 0) # Batch * (64+320)
             loc_feature = feature.narrow(1, 64, 320)                                                                        # Batch * 320
 
             pred = self.fc(feature)             # Batch * 7

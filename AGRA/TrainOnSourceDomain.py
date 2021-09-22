@@ -7,7 +7,7 @@ import argparse
 import subprocess
 import numpy as np
 import pandas as pd
-
+#sys.path.append("/home/megh/projects/fer/CD-FER-Benchmark/AGRA")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -154,7 +154,7 @@ def Train(args, model, train_dataloader, optimizer, epoch, writer):
     writer.add_scalar('AFN_Loss', afn_loss.avg, epoch)
 
     LoggerInfo = '''
-    [Tain]: 
+    [Train]: 
     Epoch {0}
     Data Time {data_time.sum:.4f} ({data_time.avg:.4f})
     Batch Time {batch_time.sum:.4f} ({batch_time.avg:.4f})
@@ -163,11 +163,7 @@ def Train(args, model, train_dataloader, optimizer, epoch, writer):
     LoggerInfo+=AccuracyInfo
 
     LoggerInfo+='''    Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg,
-                                                                                                                                        loss=loss.avg, 
-                                                                                                                                        global_cls_loss=global_cls_loss.avg, 
-                                                                                                                                        local_cls_loss=local_cls_loss.avg,
-                                                                                                                                        afn_loss=afn_loss.avg)
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg, global_cls_loss=global_cls_loss.avg, local_cls_loss=local_cls_loss.avg,afn_loss=afn_loss.avg)
 
     print(LoggerInfo)
 
@@ -185,8 +181,8 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     loss, global_cls_loss, local_cls_loss, afn_loss, data_time, batch_time =  AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter()
 
     end = time.time()
+    print("Starting Source Data Testing")
     for step, (input, landmark, label) in enumerate(iter_source_dataloader):
-        
         input, landmark, label = input.cuda(), landmark.cuda(), label.cuda()
         data_time.update(time.time()-end)
         
@@ -216,25 +212,21 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     AccuracyInfo, acc_avg, prec_avg, recall_avg, f1_avg = Show_Accuracy(acc, prec, recall, args.class_num)
 
     LoggerInfo = '''
-    [Test (Source Domain)]: 
+    Test Source: 
     Data Time {data_time.sum:.4f} ({data_time.avg:.4f})
     Batch Time {batch_time.sum:.4f} ({batch_time.avg:.4f})
     Learning Rate {0}\n'''.format(args.lr, data_time=data_time, batch_time=batch_time)
 
     LoggerInfo+=AccuracyInfo
 
-    LoggerInfo+='''    Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg,\
-                                                                                                                                        loss=loss.avg, 
-                                                                                                                                        global_cls_loss=global_cls_loss.avg,
-                                                                                                                                        local_cls_loss=local_cls_loss.avg,
-                                                                                                                                        afn_loss=afn_loss.avg)
-
+    LoggerInfo+='''Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg,global_cls_loss=global_cls_loss.avg,local_cls_loss=local_cls_loss.avg, afn_loss=afn_loss.avg)
     print(LoggerInfo)
 
     # Save Checkpoints
     if recall_avg > Best_Recall:
         Best_Recall = recall_avg
+        print("Recall Better than Best Recall")
         print('[Save] Best Recall: %.4f.' % Best_Recall)
 
         if isinstance(model, nn.DataParallel):
@@ -278,19 +270,15 @@ def Test(args, model, test_source_dataloader, test_target_dataloader, Best_Recal
     AccuracyInfo, acc_avg, prec_avg, recall_avg, f1_avg = Show_Accuracy(acc, prec, recall, args.class_num)
 
     LoggerInfo = '''
-    [Test (Target Domain)]: 
+    Test Target: 
     Data Time {data_time.sum:.4f} ({data_time.avg:.4f})
     Batch Time {batch_time.sum:.4f} ({batch_time.avg:.4f})
     Learning Rate {0}\n'''.format(args.lr, data_time=data_time, batch_time=batch_time)
 
     LoggerInfo+=AccuracyInfo
 
-    LoggerInfo+='''    Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
-    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg,\
-                                                                                                                                        loss=loss.avg, 
-                                                                                                                                        global_cls_loss=global_cls_loss.avg,
-                                                                                                                                        local_cls_loss=local_cls_loss.avg,
-                                                                                                                                        afn_loss=afn_loss.avg)
+    LoggerInfo+='''Acc_avg {0:.4f} Prec_avg {1:.4f} Recall_avg {2:.4f} F1_avg {3:.4f}
+    Total Loss {loss:.4f} Global Cls Loss {global_cls_loss:.4f} Local Cls Loss {local_cls_loss:.4f} AFN Loss {afn_loss:.4f}'''.format(acc_avg, prec_avg, recall_avg, f1_avg, loss=loss.avg, global_cls_loss=global_cls_loss.avg, local_cls_loss=local_cls_loss.avg, afn_loss=afn_loss.avg)
 
     print(LoggerInfo)
 
@@ -304,32 +292,17 @@ def main():
     torch.manual_seed(args.seed)
 
     # Experiment Information
-    print('Log Name: %s' % args.Log_Name)
-    print('Output Path: %s' % args.OutputPath)
-    print('Backbone: %s' % args.Backbone)
-    print('Resume Model: %s' % args.Resume_Model)
-    print('CUDA_VISIBLE_DEVICES: %s' % args.GPU_ID)
+    print('log : %s' % args.Log_Name, 'out-pth %s' % args.OutputPath, 'net: %s' % args.Backbone, 'pretrained %s' % args.Resume_Model, 'dev %s' % args.GPU_ID )
 
-    print('================================================')
-
-    print('Use {} * {} Image'.format(args.faceScale, args.faceScale))
-    print('SourceDataset: %s' % args.sourceDataset)
-    print('TargetDataset: %s' % args.targetDataset)
-    print('Train Batch Size: %d' % args.train_batch_size)
-    print('Test Batch Size: %d' % args.test_batch_size)
-
-    print('================================================')
+    print('Use {} * {} Image'.format(args.faceScale, args.faceScale), 'source %s' % args.sourceDataset, 'target %s' % args.targetDataset, 'train bs %d' % args.train_batch_size,'test bs %d' % args.test_batch_size)
 
     if args.showFeature:
-        print('Show Visualiza Result of Feature.')
+        print('Show Visualization Result of Feature.')
 
     if args.isTest:
         print('Test Model.')
     else:
-        print('Train Epoch: %d' % args.epochs)
-        print('Learning Rate: %f' % args.lr)
-        print('Momentum: %f' % args.momentum)
-        print('Weight Decay: %f' % args.weight_decay)
+        print('Ep: %d' % args.epochs, 'LR %f' % args.lr, 'mu: %f' % args.momentum, 'WD: %f' % args.weight_decay)
 
         if args.useAFN:
             print('Use AFN Loss: %s' % args.methodOfAFN)
@@ -341,7 +314,7 @@ def main():
 
     print('================================================')
 
-    print('Number of classes : %d' % args.class_num)
+    print('Num cls : %d' % args.class_num)
     if not args.useLocalFeature:
         print('Only use global feature.')
     else:
@@ -389,8 +362,7 @@ def main():
     print('================================================')
 
     # Init Mean
-    if args.useLocalFeature and not args.isTest:
-        
+    if args.useLocalFeature and not args.isTest: 
         if args.useCov:
             print('Init Mean and Cov...')
             Initialize_Mean_Cov(args, model, True)
@@ -423,11 +395,9 @@ def main():
     writer = SummaryWriter(os.path.join(args.OutputPath, args.Log_Name))
 
     for epoch in range(1, args.epochs + 1):
-
         if args.showFeature and epoch%5 == 1:
             Visualization('{}_Source.pdf'.format(epoch), model, train_source_dataloader, useClassify=True, domain='Source')
             Visualization('{}_Target.pdf'.format(epoch), model, train_target_dataloader, useClassify=True, domain='Target')
-
             VisualizationForTwoDomain('{}_train'.format(epoch), model, train_source_dataloader, train_target_dataloader, useClassify=True, showClusterCenter=False)
             VisualizationForTwoDomain('{}_test'.format(epoch), model, test_source_dataloader, test_target_dataloader, useClassify=True, showClusterCenter=False)
 
